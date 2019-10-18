@@ -88,7 +88,7 @@ class BookDaoImplTest {
     @DisplayName("Поиск книги по названию")
     @Test
     void getByName() {
-        List<Book> books = bookDao.getByName("Вишневый сад", 1958);
+        List<Book> books = bookDao.getByNameAndYear("Вишневый сад", 1958);
         assertAll("книга \"Вишневый сад\""
                 , () -> assertNotNull(books, () -> "Вернулся NULL вместо списка книг")
                 , () -> assertEquals( books.size(), 1, () -> "Должна вернуться 1 запись")

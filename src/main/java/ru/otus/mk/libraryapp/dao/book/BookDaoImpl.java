@@ -21,7 +21,6 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Repository
 public class BookDaoImpl implements BookDao {
@@ -65,16 +64,16 @@ public class BookDaoImpl implements BookDao {
     private void linkBookToAurhorInDB(Book book) {
         checkBookIdentificator(book);
 
-        AtomicInteger idx = new AtomicInteger(0);
-        book.getAuthors().stream().forEach((author -> {
+        final int[] idx = {0};
+        book.getAuthors().forEach(author -> {
             if( author.getId() == 0) {
                 authorDao.insert(author);
             }
 
             if( !isAuthorLinkExist(book.getId(), author.getId()) ) {
-                createBookAuthorLink( book.getId(), author.getId(), idx.getAndIncrement() );
+                createBookAuthorLink( book.getId(), author.getId(), idx[0]++ );
             }
-        }));
+        });
     }
 
     private void checkBookIdentificator( Book book) {
@@ -109,7 +108,7 @@ public class BookDaoImpl implements BookDao {
 
     private void linkBookToGenreInDB(Book book) {
         checkBookIdentificator(book);
-        book.getGenres().stream().forEach((genre -> {
+        book.getGenres().forEach((genre -> {
             if( genre.getId() == 0) {
                 Genre findedGenre = genreDao.getByName(genre.getGenreName());
                 if( findedGenre != null )
@@ -178,7 +177,7 @@ public class BookDaoImpl implements BookDao {
     }
 
     @Override
-    public List<Book> getByName(final String name, final Integer issueYear) {
+    public List<Book> getByNameAndYear(final String name, final Integer issueYear) {
         String sql = "select * from books where upper(trim(book_name))=:name and issue_year=:issue_year";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("name", name.trim().toUpperCase());

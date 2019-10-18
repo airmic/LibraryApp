@@ -9,6 +9,6 @@ public interface BookDao {
     void insert(final Book book);
     void update(final Book book);
     List<Book> getBookList();
-    List<Book> getByName(final String name, final Integer issue_year);
+    List<Book> getByNameAndYear(final String name, final Integer issueYear);
     Book getByID(final long id);
 }

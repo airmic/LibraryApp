@@ -30,24 +30,25 @@ public class Book {
 
     public void deleteGenre(Genre genre) {
         genres.removeIf( (g) -> {
-            if( g.getId() == genre.getId() )
-                return true;
-            else if( g.getGenreName().trim().toUpperCase().equals(genre.getGenreName().trim().toUpperCase()) )
+            if( (g.getId() == genre.getId() )
+                ||( g.getGenreName().trim().toUpperCase().equals(genre.getGenreName().trim().toUpperCase()) )
+            )
                 return true;
             return false;
         });
     }
 
     public void deleteAuthor(Author author) {
-        for(Author a: authors) {
-            if( a.getId() == author.getId() )
-                authors.remove(a);
-            else if( a.getLastName().trim().toUpperCase().equals(author.getLastName().trim().toUpperCase())
+        authors.removeIf( (a) -> {
+            if( (a.getId() == author.getId())
+                ||( a.getLastName().trim().toUpperCase().equals(author.getLastName().trim().toUpperCase())
                     && a.getFirstName().trim().toUpperCase().equals(author.getFirstName().trim().toUpperCase())
                     && (a.getMiddleName() == null || a.getMiddleName().isEmpty() || a.getMiddleName().trim().toUpperCase().equals(author.getMiddleName().trim().toUpperCase()))
+                )
             )
-                authors.remove(a);
-        }
+                return true;
+            return false;
+        });
     }
 
     public void clearGenreList() {

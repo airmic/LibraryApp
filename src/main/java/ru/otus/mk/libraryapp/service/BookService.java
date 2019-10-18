@@ -54,7 +54,7 @@ public class BookService {
 
     public Book  createNewBookIsSameNotExist(final String bookName, final Integer issueYear, final long authorId, final long genreId) {
 
-        if( bookDao.getByName(bookName, issueYear).isEmpty() ) {
+        if( bookDao.getByNameAndYear(bookName, issueYear).isEmpty() ) {
             Book book = new Book(bookName,issueYear);
             book.linkToGenre(genreDao.getByID(genreId));
             book.linkToAuthor(authorDao.getByID(authorId));
