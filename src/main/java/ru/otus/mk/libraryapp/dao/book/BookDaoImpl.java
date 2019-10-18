@@ -11,28 +11,36 @@ import org.springframework.stereotype.Repository;
 import ru.otus.mk.libraryapp.dao.author.AuthorDao;
 import ru.otus.mk.libraryapp.dao.author.AuthorDaoImpl;
 import ru.otus.mk.libraryapp.dao.genre.GenreDao;
-import ru.otus.mk.libraryapp.dao.genre.GenreDaoImpl;
 import ru.otus.mk.libraryapp.domain.Author;
 import ru.otus.mk.libraryapp.domain.Book;
 import ru.otus.mk.libraryapp.domain.Genre;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class BookDaoImpl implements BookDao {
     private final NamedParameterJdbcOperations namedParameterJdbcOperations;
     private final AuthorDao authorDao;
     private final GenreDao genreDao;
+    private final BookGenreRelations bookGenreRelations;
+    private final BookAuthorRelations bookAuthorRelations;
+
+    private final Map<Long, Book> mBooks;
 
     @Autowired
-    public BookDaoImpl(NamedParameterJdbcOperations namedParameterJdbcOperations, AuthorDao authorDao, GenreDao genreDao) {
+    public BookDaoImpl(NamedParameterJdbcOperations namedParameterJdbcOperations
+            , AuthorDao authorDao, GenreDao genreDao
+            , BookGenreRelations bookGenreRelations
+            , BookAuthorRelations bookAuthorRelations) {
         this.namedParameterJdbcOperations = namedParameterJdbcOperations;
         this.authorDao = authorDao;
         this.genreDao = genreDao;
+        this.bookGenreRelations = bookGenreRelations;
+        this.bookAuthorRelations = bookAuthorRelations;
+        this.mBooks =  new HashMap<>();
     }
 
     private void createBookAuthorLink(long book_id, long author_id, int order_num) {
@@ -47,17 +55,11 @@ public class BookDaoImpl implements BookDao {
         namedParameterJdbcOperations.update(sql, params);
     }
 
-    private boolean isAuthorLinkExist(long book_id, long author_id) {
-        final String sql = "select 1 from author_book where book_id=:book_id and author_id=:author_id";
-        MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("book_id", book_id);
-        params.addValue("author_id", author_id);
-        try {
-            namedParameterJdbcOperations.queryForObject(sql, params, Byte.class);
-        } catch (IncorrectResultSizeDataAccessException e) {
+    private boolean isAuthorLinkExist(Book book, Author author) {
+        List<Author> bookAuthor = bookAuthorRelations.getAuthors(book);
+        if( bookAuthor == null)
             return false;
-        }
-        return true;
+        return bookAuthor.contains(author);
     }
 
 
@@ -70,8 +72,32 @@ public class BookDaoImpl implements BookDao {
                 authorDao.insert(author);
             }
 
-            if( !isAuthorLinkExist(book.getId(), author.getId()) ) {
-                createBookAuthorLink( book.getId(), author.getId(), idx[0]++ );
+            if( !isAuthorLinkExist(book, author) ) {
+                bookAuthorRelations.addAuthorToBook(book, author, idx[0]++ );
+            }
+        });
+    }
+
+    private boolean isGenreLinkExist(Book book, Genre genre) {
+        List<Genre> bookGenres = bookGenreRelations.getGenres(book);
+        if( bookGenres == null)
+            return false;
+        return bookGenres.contains(genre);
+    }
+
+    private void linkBookToGenreInDB(Book book) {
+        checkBookIdentificator(book);
+        book.getGenres().forEach(genre -> {
+            if( genre.getId() == 0) {
+                Genre findedGenre = genreDao.getByName(genre.getGenreName());
+                if( findedGenre != null )
+                    genre.setId(findedGenre.getId());
+                else
+                    genreDao.insert(genre);
+            }
+
+            if( !isGenreLinkExist(book, genre) ) {
+                bookGenreRelations.addGenreToBook(book,genre);
             }
         });
     }
@@ -82,46 +108,9 @@ public class BookDaoImpl implements BookDao {
         }
     }
 
-    private void createBookGenreLink(long book_id, long genre_id) {
-        final String sql = "insert into genre_book(book_id,genre_id) values(:book_id, :genre_id)";
 
 
-        MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("book_id", book_id);
-        params.addValue("genre_id", genre_id);
 
-        namedParameterJdbcOperations.update(sql, params);
-    }
-
-    private boolean isGenreLinkExist(long book_id, long genre_id) {
-        final String sql = "select 1 from genre_book where book_id=:book_id and genre_id=:genre_id";
-        MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("book_id", book_id);
-        params.addValue("genre_id", genre_id);
-        try {
-            namedParameterJdbcOperations.queryForObject(sql, params, Byte.class);
-        } catch (IncorrectResultSizeDataAccessException e) {
-            return false;
-        }
-        return true;
-    }
-
-    private void linkBookToGenreInDB(Book book) {
-        checkBookIdentificator(book);
-        book.getGenres().forEach((genre -> {
-            if( genre.getId() == 0) {
-                Genre findedGenre = genreDao.getByName(genre.getGenreName());
-                if( findedGenre != null )
-                    genre.setId(findedGenre.getId());
-                else
-                    genreDao.insert(genre);
-            }
-
-            if( !isGenreLinkExist(book.getId(), genre.getId()) ) {
-                createBookGenreLink( book.getId(), genre.getId());
-            }
-        }));
-    }
 
     @Override
     public void insert(final Book book) {
@@ -143,13 +132,11 @@ public class BookDaoImpl implements BookDao {
     }
 
     private void deleteAllBookAuthorLinks(Book book) {
-        final String sql = "delete from author_book where book_id=:id";
-        namedParameterJdbcOperations.update(sql, Collections.singletonMap("id",book.getId()));
+        bookAuthorRelations.clearAuthorsfromBook(book);
     }
 
     private void deleteAllBookGenerLinks(Book book) {
-        final String sql = "delete from genre_book where book_id=:id";
-        namedParameterJdbcOperations.update(sql, Collections.singletonMap("id",book.getId()));
+        bookGenreRelations.clearGenresfromBook(book);
     }
 
     @Override
@@ -166,14 +153,33 @@ public class BookDaoImpl implements BookDao {
 
         deleteAllBookAuthorLinks(book);
         linkBookToAurhorInDB(book);
+
         deleteAllBookGenerLinks(book);
         linkBookToGenreInDB(book);
     }
 
     @Override
     public List<Book> getBookList() {
+        return getBookList(false);
+    }
+
+    public List<Book> getBookList(boolean neetReload) {
         final String sql = "select * from books ";
-        return namedParameterJdbcOperations.query(sql, new BookRowMapper() );
+        if(neetReload || mBooks.isEmpty()) {
+            namedParameterJdbcOperations.query(sql, rs -> {
+                mBooks.clear();
+                while(rs.next()) {
+                    Book book = new Book(rs.getString("book_name"), rs.getInt("issue_year"));
+                    book.setId(rs.getLong("book_id"));
+                    book.addAllGenres(getBookGenres(book));
+                    book.addAllAuthors(getBookAuthor(book));
+
+                    mBooks.put(book.getId(), book);
+                }
+                return mBooks;
+            });
+        }
+        return mBooks.values().stream().collect(Collectors.toList());
     }
 
     @Override
@@ -194,13 +200,7 @@ public class BookDaoImpl implements BookDao {
     }
 
     private List<Genre> getBookGenres(Book book) {
-        final String sql = "select g.genre_id, g.genre_name\n" +
-                "  from books b \n" +
-                "  natural join genre_book gb\n" +
-                "  natural join genres g\n" +
-                " where b.book_id=:id";
-
-        return namedParameterJdbcOperations.query(sql, Collections.singletonMap("id",book.getId()), new GenreDaoImpl.GenreRowMapper());
+        return bookGenreRelations.getGenres(book);
     }
 
     private List<Author> getBookAuthor(Book book) {

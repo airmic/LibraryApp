@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("BookDaoImp")
 @JdbcTest
-@Import({BookDaoImpl.class, AuthorDaoImpl.class, GenreDaoImpl.class})
+@Import({BookDaoImpl.class, AuthorDaoImpl.class, GenreDaoImpl.class, BookGenreRelationsImpl.class, BookAuthorRelationsImpl.class})
 class BookDaoImplTest {
 
     @Autowired
@@ -81,7 +81,7 @@ class BookDaoImplTest {
         List<Book> books = bookDao.getBookList();
         assertAll(
                 () -> assertNotNull(books, () -> "Вернулся NULL вместо списка книг")
-                , () -> assertEquals(books.size(), 5, () -> "Должно вернуться 5 строк")
+                , () -> assertEquals(5, books.size(), () -> "Должно вернуться 5 строк")
         );
     }
 
