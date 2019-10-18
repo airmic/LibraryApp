@@ -28,7 +28,6 @@ class BookDaoImplTest {
     @Test
     void insert() {
         Book book = new Book("1984", 2001);
-        book.setCnt(3);
         List<Author> authors = new ArrayList<>(1);
         authors.add(new Author("Оруэлл", "Джордж"));
         book.addAllAuthors(authors);
@@ -49,7 +48,6 @@ class BookDaoImplTest {
     void update() {
 
         Book book = bookDao.getByID(1);
-        book.setCnt(40);
 
         Genre newGenre = new Genre("Фантастика");
         Genre oldGenre = new Genre("Комедия");

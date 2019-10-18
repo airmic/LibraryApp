@@ -42,7 +42,7 @@ public class ConsoleService {
 
     public void printBookInfo(Book book) {
         System.out.println("Информация по введенной книге\n");
-        System.out.println(String.format("ID - %d\nНазвание - %s\nГод издания - %d\nКол-во в библиотеке - %d\n", book.getId(), book.getBookName(), book.getIssueYear(), book.getCnt()));
+        System.out.println(String.format("ID - %d\nНазвание - %s\nГод издания - %d\n", book.getId(), book.getBookName(), book.getIssueYear()));
         System.out.println("Относится к жанрам:");
         for(Genre genre : book.getGenres()) {
             System.out.println(genre.getGenreName());

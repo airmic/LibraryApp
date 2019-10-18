@@ -10,8 +10,7 @@ create table genres(genre_id number auto_increment primary key
                    , unique key genres_unq1 (genre_name));
 create table books(book_id number auto_increment primary key
                   , book_name varchar2(50) not null
-                  , issue_year number not null
-                  , cnt number default 1);
+                  , issue_year number not null);
 create table genre_book(genre_id number not null
                        , book_id number not null
                        , foreign key (genre_id) references genres(genre_id)

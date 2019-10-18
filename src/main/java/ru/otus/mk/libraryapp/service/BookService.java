@@ -52,11 +52,10 @@ public class BookService {
         return authorDao.getAuthorList();
     }
 
-    public Book  createNewBookIsSameNotExist(final String bookName, final Integer issueYear, final long authorId, final long genreId, final int cnt) {
+    public Book  createNewBookIsSameNotExist(final String bookName, final Integer issueYear, final long authorId, final long genreId) {
 
         if( bookDao.getByName(bookName, issueYear).isEmpty() ) {
             Book book = new Book(bookName,issueYear);
-            book.setCnt(cnt);
             book.linkToGenre(genreDao.getByID(genreId));
             book.linkToAuthor(authorDao.getByID(authorId));
             bookDao.insert(book);

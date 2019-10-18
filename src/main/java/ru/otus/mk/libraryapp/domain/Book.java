@@ -13,7 +13,6 @@ public class Book {
     private long id;
     private final String bookName;
     private final int issueYear;
-    private int cnt;
     private final List<Author> authors = new ArrayList<>();
     private final List<Genre> genres = new ArrayList<>();
 

@@ -2,11 +2,11 @@ insert into GENRES(GENRE_ID, GENRE_NAME) values (default, 'Драма');
 insert into GENRES(GENRE_ID, GENRE_NAME) values (default, 'Трагедия');
 insert into GENRES(GENRE_NAME) values ('Комедия');
 
-insert into BOOKS(BOOK_NAME,ISSUE_YEAR, CNT) values ('Горе от ума', 1957, 20);
-insert into BOOKS(BOOK_NAME,ISSUE_YEAR, CNT) values ('Вишневый сад', 1958, 25);
-insert into BOOKS(BOOK_NAME,ISSUE_YEAR, CNT) values ('Недоросль', 1959, 24);
-insert into BOOKS(BOOK_NAME,ISSUE_YEAR, CNT) values ('Преступление и наказание', 1955, 10);
-insert into BOOKS(BOOK_NAME,ISSUE_YEAR, CNT) values ('Гамлет', 1954, 23);
+insert into BOOKS(BOOK_NAME,ISSUE_YEAR) values ('Горе от ума', 1957);
+insert into BOOKS(BOOK_NAME,ISSUE_YEAR) values ('Вишневый сад', 1958);
+insert into BOOKS(BOOK_NAME,ISSUE_YEAR) values ('Недоросль', 1959);
+insert into BOOKS(BOOK_NAME,ISSUE_YEAR) values ('Преступление и наказание', 1955);
+insert into BOOKS(BOOK_NAME,ISSUE_YEAR) values ('Гамлет', 1954);
 
 insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Александр','Грибоедов','Сергеевич');
 insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Антон','Чехов','Павлович');

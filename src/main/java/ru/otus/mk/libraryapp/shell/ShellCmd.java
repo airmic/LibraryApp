@@ -69,8 +69,8 @@ public class ShellCmd {
 
     @ShellMethod(value="add new book", key = {"anb"})
     @ShellMethodAvailability("isAuthFun")
-    public void addBook(@ShellOption String bookName, @ShellOption Integer issueYear, @ShellOption long authorId, @ShellOption long genreId, @ShellOption int cnt) {
-        Book book = bookService.createNewBookIsSameNotExist(bookName, issueYear, authorId, genreId, cnt);
+    public void addBook(@ShellOption String bookName, @ShellOption Integer issueYear, @ShellOption long authorId, @ShellOption long genreId) {
+        Book book = bookService.createNewBookIsSameNotExist(bookName, issueYear, authorId, genreId);
         consoleService.printBookInfo(book);
     }
 

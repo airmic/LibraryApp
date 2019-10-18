@@ -127,12 +127,11 @@ public class BookDaoImpl implements BookDao {
     @Override
     public void insert(final Book book) {
 
-        final String sql = "insert into books(book_name,issue_year, cnt) values(:book_name, :issue_year, :cnt)";
+        final String sql = "insert into books(book_name,issue_year) values(:book_name, :issue_year)";
 
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("book_name", book.getBookName());
         params.addValue("issue_year", book.getIssueYear());
-        params.addValue("cnt", book.getCnt());
 
         KeyHolder kh = new GeneratedKeyHolder();
 
@@ -158,11 +157,10 @@ public class BookDaoImpl implements BookDao {
     public void update(final Book book) {
         if( book == null || book.getId() == 0)
             throw new RuntimeException("Не найден идентификатор у книги");
-        final String sql = "update books set book_name=:book_name, issue_year=:issue_year, cnt=:cnt where book_id=:id";
+        final String sql = "update books set book_name=:book_name, issue_year=:issue_year where book_id=:id";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("book_name", book.getBookName());
         params.addValue("issue_year", book.getIssueYear());
-        params.addValue("cnt", book.getCnt());
         params.addValue("id", book.getId());
 
         namedParameterJdbcOperations.update(sql, params);
@@ -222,7 +220,6 @@ public class BookDaoImpl implements BookDao {
         @Override
         public Book mapRow(ResultSet rs, int rowNum) throws SQLException {
             Book book = new Book(rs.getString("book_name"), rs.getInt("issue_year"));
-            book.setCnt(rs.getInt("cnt"));
             book.setId(rs.getLong("book_id"));
             book.addAllGenres(getBookGenres(book));
             book.addAllAuthors(getBookAuthor(book));
