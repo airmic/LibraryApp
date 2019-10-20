@@ -12,18 +12,25 @@ import ru.otus.mk.libraryapp.domain.Author;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public class AuthorDaoImpl implements AuthorDao {
 
     private final NamedParameterJdbcOperations namedParameterJdbcOperations;
+    private final Map<Long, Author> authorMap;
 
     @Autowired
     public AuthorDaoImpl(NamedParameterJdbcOperations namedParameterJdbcOperations) {
         this.namedParameterJdbcOperations = namedParameterJdbcOperations;
+        authorMap = new HashMap<>();
+        reloadAuthors();
     }
+
+
 
     @Override
     public void insert(final Author author) {
@@ -42,7 +49,7 @@ public class AuthorDaoImpl implements AuthorDao {
     }
 
     @Override
-    public List<Author> getAuthorList() {
+    public List<Author> getAllAuthorList() {
         final String sql = "select * from authors ";
         return namedParameterJdbcOperations.query(sql, new AuthorRowMapper() );
     }
@@ -65,6 +72,22 @@ public class AuthorDaoImpl implements AuthorDao {
         final String sql = "select * from authors where author_id=:id";
         Map<String, Object> params = Collections.singletonMap("id",id);
         return namedParameterJdbcOperations.queryForObject(sql, params, new AuthorRowMapper());
+    }
+
+    @Override
+    public Author getByCachedID(long id) {
+        return authorMap.get(id);
+    }
+
+    @Override
+    public void reloadAuthors() {
+        authorMap.putAll(getLinkedAuthorList().stream().collect(Collectors.toMap(Author::getId, x -> x)));
+    }
+
+    @Override
+    public List<Author> getLinkedAuthorList() {
+        final String sql = "select distinct a.* from authors a natural join author_book";
+        return namedParameterJdbcOperations.query(sql, new AuthorRowMapper() );
     }
 
     public static class AuthorRowMapper implements RowMapper<Author> {

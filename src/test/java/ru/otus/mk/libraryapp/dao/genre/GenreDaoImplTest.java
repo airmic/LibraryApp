@@ -33,7 +33,7 @@ class GenreDaoImplTest {
 
     @Test
     void getAuthorList() {
-        List<Genre> genres = genreDao.getGenreList();
+        List<Genre> genres = genreDao.getAllGenreList();
         assertAll("Проверка на количество жанров"
                 , () -> assertNotNull( genres, () -> "Объект не должен быть равен НУЛУ" )
                 , () -> assertEquals( genres.size(), 3, () -> "Количество жанров должно быть 3" )

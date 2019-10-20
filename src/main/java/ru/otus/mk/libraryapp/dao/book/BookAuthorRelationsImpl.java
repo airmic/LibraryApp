@@ -17,18 +17,20 @@ import java.util.Map;
 public class BookAuthorRelationsImpl implements BookAuthorRelations {
 
     private final Map<Long, List<Author>> bookAuthorsMap;
-    private final AuthorDao AuthorDao;
+    private final AuthorDao authorDao;
     private final NamedParameterJdbcOperations op;
 
     @Autowired
-    public BookAuthorRelationsImpl(NamedParameterJdbcOperations op, AuthorDao AuthorDao) {
+    public BookAuthorRelationsImpl(NamedParameterJdbcOperations op, AuthorDao authorDao) {
         this.op = op;
-        this.AuthorDao = AuthorDao;
-        bookAuthorsMap = getBookAuthorRelations();
+        this.authorDao = authorDao;
+        bookAuthorsMap = new HashMap<>();
+        reloadRelations();
     }
 
     private Map<Long, List<Author>> getBookAuthorRelations() {
-        final String sql = "select * from Author_book";
+        final String sql = "select * from author_book";
+        authorDao.reloadAuthors();
         return op.query(sql, rs -> {
             return new HashMap<Long, List<Author>>() {{
                 while ( rs.next() ) {
@@ -37,7 +39,7 @@ public class BookAuthorRelationsImpl implements BookAuthorRelations {
                         bookAuthorList = new ArrayList<>();
                         put(rs.getLong("book_id"), bookAuthorList);
                     }
-                    bookAuthorList.add(AuthorDao.getByID(rs.getLong("author_id")));
+                    bookAuthorList.add(authorDao.getByCachedID(rs.getLong("author_id")));
 
 
                 }
@@ -89,5 +91,19 @@ public class BookAuthorRelationsImpl implements BookAuthorRelations {
     @Override
     public List<Author> getAuthors(Book book) {
         return bookAuthorsMap.get(book.getId());
+    }
+
+    @Override
+    public List<Author> getAuthorsFromDB(Book book) {
+        final String sql = "select author_id from author_book where book_id = :book_id";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("book_id", book.getId());
+        return op.query(sql, params, (rs, rowNum) -> authorDao.getByID(rs.getLong("author_id")));
+    }
+
+    @Override
+    public void reloadRelations() {
+        bookAuthorsMap.clear();
+        bookAuthorsMap.putAll(getBookAuthorRelations());
     }
 }

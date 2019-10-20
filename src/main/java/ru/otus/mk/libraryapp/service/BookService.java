@@ -45,11 +45,11 @@ public class BookService {
     }
 
     public List<Genre> getAllGenres() {
-        return genreDao.getGenreList();
+        return genreDao.getAllGenreList();
     }
 
     public List<Author> getAllAuthors() {
-        return authorDao.getAuthorList();
+        return authorDao.getAllAuthorList();
     }
 
     public Book  createNewBookIsSameNotExist(final String bookName, final Integer issueYear, final long authorId, final long genreId) {

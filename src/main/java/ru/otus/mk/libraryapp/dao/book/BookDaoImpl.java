@@ -1,7 +1,6 @@
 package ru.otus.mk.libraryapp.dao.book;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
@@ -9,7 +8,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.otus.mk.libraryapp.dao.author.AuthorDao;
-import ru.otus.mk.libraryapp.dao.author.AuthorDaoImpl;
 import ru.otus.mk.libraryapp.dao.genre.GenreDao;
 import ru.otus.mk.libraryapp.domain.Author;
 import ru.otus.mk.libraryapp.domain.Book;
@@ -43,20 +41,8 @@ public class BookDaoImpl implements BookDao {
         this.mBooks =  new HashMap<>();
     }
 
-    private void createBookAuthorLink(long book_id, long author_id, int order_num) {
-        final String sql = "insert into author_book(book_id,author_id, order_num) values(:book_id, :author_id, :order_num)";
-
-
-        MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("book_id", book_id);
-        params.addValue("author_id", author_id);
-        params.addValue("order_num", order_num);
-
-        namedParameterJdbcOperations.update(sql, params);
-    }
-
     private boolean isAuthorLinkExist(Book book, Author author) {
-        List<Author> bookAuthor = bookAuthorRelations.getAuthors(book);
+        List<Author> bookAuthor = bookAuthorRelations.getAuthorsFromDB(book);
         if( bookAuthor == null)
             return false;
         return bookAuthor.contains(author);
@@ -168,11 +154,13 @@ public class BookDaoImpl implements BookDao {
         if(neetReload || mBooks.isEmpty()) {
             namedParameterJdbcOperations.query(sql, rs -> {
                 mBooks.clear();
+                bookGenreRelations.reloadRelations();
+                bookAuthorRelations.reloadRelations();
                 while(rs.next()) {
                     Book book = new Book(rs.getString("book_name"), rs.getInt("issue_year"));
                     book.setId(rs.getLong("book_id"));
-                    book.addAllGenres(getBookGenres(book));
-                    book.addAllAuthors(getBookAuthor(book));
+                    book.addAllGenres(bookGenreRelations.getGenres(book));
+                    book.addAllAuthors(bookAuthorRelations.getAuthors(book));
 
                     mBooks.put(book.getId(), book);
                 }
@@ -199,20 +187,7 @@ public class BookDaoImpl implements BookDao {
         return book;
     }
 
-    private List<Genre> getBookGenres(Book book) {
-        return bookGenreRelations.getGenres(book);
-    }
 
-    private List<Author> getBookAuthor(Book book) {
-        final String sql = "select a.author_id, a.*\n" +
-                "  from books b \n" +
-                "  natural join author_book ab\n" +
-                "  natural join authors a\n" +
-                " where b.book_id=:id\n" +
-                " order by ab.order_num nulls first";
-
-        return namedParameterJdbcOperations.query(sql, Collections.singletonMap("id",book.getId()), new AuthorDaoImpl.AuthorRowMapper());
-    }
 
     private class BookRowMapper implements RowMapper<Book> {
 
@@ -220,8 +195,8 @@ public class BookDaoImpl implements BookDao {
         public Book mapRow(ResultSet rs, int rowNum) throws SQLException {
             Book book = new Book(rs.getString("book_name"), rs.getInt("issue_year"));
             book.setId(rs.getLong("book_id"));
-            book.addAllGenres(getBookGenres(book));
-            book.addAllAuthors(getBookAuthor(book));
+            book.addAllGenres(bookGenreRelations.getGenresFromDB(book));
+            book.addAllAuthors(bookAuthorRelations.getAuthorsFromDB(book));
             return book;
         }
     }

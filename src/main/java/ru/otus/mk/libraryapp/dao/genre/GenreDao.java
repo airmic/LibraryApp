@@ -6,7 +6,10 @@ import java.util.List;
 
 public interface GenreDao {
     void insert(final Genre genre);
-    List<Genre> getGenreList();
+    List<Genre> getAllGenreList();
     Genre getByName(final String name);
     Genre getByID(final long id);
+    Genre getByCachedID(final long id);
+    void reloadGenres();
+    List<Genre> getLinkedGenreList();
 }

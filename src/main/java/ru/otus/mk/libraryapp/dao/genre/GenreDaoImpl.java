@@ -12,16 +12,23 @@ import ru.otus.mk.libraryapp.domain.Genre;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public class GenreDaoImpl implements GenreDao {
 
     private final NamedParameterJdbcOperations namedParameterJdbcOperations;
+    private final Map<Long, Genre> genreMap;
+
 
     @Autowired
     public GenreDaoImpl(NamedParameterJdbcOperations namedParameterJdbcOperations) {
         this.namedParameterJdbcOperations = namedParameterJdbcOperations;
+        genreMap = new HashMap<>();
+        reloadGenres();
     }
     @Override
     public void insert(Genre genre) {
@@ -38,7 +45,7 @@ public class GenreDaoImpl implements GenreDao {
     }
 
     @Override
-    public List<Genre> getGenreList() {
+    public List<Genre> getAllGenreList() {
         final String sql = "select * from genres ";
         return namedParameterJdbcOperations.query(sql, new GenreRowMapper() );
     }
@@ -61,6 +68,23 @@ public class GenreDaoImpl implements GenreDao {
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
         return namedParameterJdbcOperations.queryForObject(sql, params, new GenreRowMapper() );
+    }
+
+    @Override
+    public Genre getByCachedID(long id) {
+        return genreMap.get(id);
+
+    }
+
+    @Override
+    public void reloadGenres() {
+        genreMap.putAll(getLinkedGenreList().stream().collect(Collectors.toMap(Genre::getId, x -> x)));
+    }
+
+    @Override
+    public List<Genre> getLinkedGenreList() {
+        final String sql = "select distinct a.* from genres a natural join genre_book";
+        return namedParameterJdbcOperations.query(sql, new GenreRowMapper() );
     }
 
     public static class GenreRowMapper implements RowMapper<Genre> {

@@ -11,5 +11,7 @@ public interface BookGenreRelations {
     void deleteGenreFromBook(Book book, Genre genre);
     void clearGenresfromBook(Book book);
     List<Genre> getGenres(Book book);
+    List<Genre> getGenresFromDB(Book book);
+    void reloadRelations();
 
 }

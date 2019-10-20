@@ -13,6 +13,9 @@ insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Антон','Ч
 insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Денис','Фонвизин','Иванович');
 insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Фёдор','Достоевскмй','Михайлович');
 insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Вильям','Шекспир','');
+insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Стругацкий','Аркадий','Натанович');
+insert into AUTHORS(FIRST_NAME, LAST_NAME, MIDDLE_NAME) values ('Стругацкий','Борис','Натанович');
+
 
 insert into GENRE_BOOK(GENRE_ID, BOOK_ID) values ((select GENRE_ID from GENRES where lower(GENRE_NAME) like 'драма')
                                                  ,(select BOOK_ID from BOOKS where lower(BOOK_NAME) like 'преступление%'));

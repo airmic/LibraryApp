@@ -3,11 +3,9 @@ package ru.otus.mk.libraryapp.dao.author;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ru.otus.mk.libraryapp.domain.Author;
 
 import java.util.List;
@@ -30,11 +28,18 @@ class AuthorDaoImplTest {
         assertNotNull(author.getId(), () -> "Идентификатор новой записи не должен быть НУЛОМ");
     }
 
-    @DisplayName("Список авторов")
+    @DisplayName("Список всех авторов")
     @Test
     void getAuthorList() {
-        List<Author> authors = authorDao.getAuthorList();
-        assertEquals(authors.size(), 5, () -> "Количество авторов должно быть 5");
+        List<Author> authors = authorDao.getAllAuthorList();
+        assertEquals(authors.size(), 7, () -> "Количество всех авторов должно быть 7");
+    }
+
+    @DisplayName("Список всех авторов")
+    @Test
+    void getLinkedAuthorList() {
+        List<Author> authors = authorDao.getLinkedAuthorList();
+        assertEquals(authors.size(), 5, () -> "Количество авторов, связанныйх с книгами должно быть 5");
     }
 
     @DisplayName("Поиск автора по фамилии")

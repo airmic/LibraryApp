@@ -21,11 +21,13 @@ public class BookGenreRelationsImpl implements BookGenreRelations {
     public BookGenreRelationsImpl(NamedParameterJdbcOperations op, GenreDao genreDao) {
         this.op = op;
         this.genreDao = genreDao;
-        bookGenresMap = getBookGenreRelations();
+        bookGenresMap = new HashMap<>();
+        reloadRelations();
     }
 
     private Map<Long, List<Genre>> getBookGenreRelations() {
         final String sql = "select * from genre_book";
+        genreDao.reloadGenres();
         return op.query(sql, rs -> {
             return new HashMap<Long, List<Genre>>() {{
                 while ( rs.next() ) {
@@ -34,7 +36,7 @@ public class BookGenreRelationsImpl implements BookGenreRelations {
                         bookGenreList = new ArrayList<>();
                         put(rs.getLong("book_id"), bookGenreList);
                     }
-                    bookGenreList.add(genreDao.getByID(rs.getLong("genre_id")));
+                    bookGenreList.add(genreDao.getByCachedID(rs.getLong("genre_id")));
 
 
                 }
@@ -85,5 +87,19 @@ public class BookGenreRelationsImpl implements BookGenreRelations {
     @Override
     public List<Genre> getGenres(Book book) {
         return bookGenresMap.get(book.getId());
+    }
+
+    @Override
+    public List<Genre> getGenresFromDB(Book book) {
+        final String sql = "select genre_id from genre_book where book_id = :book_id";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("book_id", book.getId());
+        return op.query(sql, params, (rs, rowNum) -> genreDao.getByID(rs.getLong("genre_id")));
+    }
+
+    @Override
+    public void reloadRelations() {
+        bookGenresMap.clear();
+        bookGenresMap.putAll(getBookGenreRelations());
     }
 }
