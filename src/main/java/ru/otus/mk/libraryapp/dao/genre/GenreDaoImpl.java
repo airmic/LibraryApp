@@ -15,20 +15,17 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 
 @Repository
 public class GenreDaoImpl implements GenreDao {
 
     private final NamedParameterJdbcOperations namedParameterJdbcOperations;
-    private final Map<Long, Genre> genreMap;
 
 
     @Autowired
     public GenreDaoImpl(NamedParameterJdbcOperations namedParameterJdbcOperations) {
         this.namedParameterJdbcOperations = namedParameterJdbcOperations;
-        genreMap = new HashMap<>();
-        reloadGenres();
     }
     @Override
     public void insert(Genre genre) {
@@ -71,20 +68,15 @@ public class GenreDaoImpl implements GenreDao {
     }
 
     @Override
-    public Genre getByCachedID(long id) {
-        return genreMap.get(id);
-
-    }
-
-    @Override
-    public void reloadGenres() {
-        genreMap.putAll(getLinkedGenreList().stream().collect(Collectors.toMap(Genre::getId, x -> x)));
-    }
-
-    @Override
-    public List<Genre> getLinkedGenreList() {
+    public Map<Long, Genre> getLinkedGenreMap() {
         final String sql = "select distinct a.* from genres a natural join genre_book";
-        return namedParameterJdbcOperations.query(sql, new GenreRowMapper() );
+        return namedParameterJdbcOperations.query(sql, rs -> {
+            Map<Long, Genre> genreMap = new HashMap<>();
+            while(rs.next()) {
+                genreMap.put(rs.getLong("genre_id"), new Genre(rs.getLong("genre_id"), rs.getString("genre_name")));
+            }
+            return genreMap;
+        } );
     }
 
     public static class GenreRowMapper implements RowMapper<Genre> {

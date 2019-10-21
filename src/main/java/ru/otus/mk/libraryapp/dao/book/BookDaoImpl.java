@@ -16,7 +16,6 @@ import ru.otus.mk.libraryapp.domain.Genre;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class BookDaoImpl implements BookDao {
@@ -26,7 +25,6 @@ public class BookDaoImpl implements BookDao {
     private final BookGenreRelations bookGenreRelations;
     private final BookAuthorRelations bookAuthorRelations;
 
-    private final Map<Long, Book> mBooks;
 
     @Autowired
     public BookDaoImpl(NamedParameterJdbcOperations namedParameterJdbcOperations
@@ -38,11 +36,10 @@ public class BookDaoImpl implements BookDao {
         this.genreDao = genreDao;
         this.bookGenreRelations = bookGenreRelations;
         this.bookAuthorRelations = bookAuthorRelations;
-        this.mBooks =  new HashMap<>();
     }
 
     private boolean isAuthorLinkExist(Book book, Author author) {
-        List<Author> bookAuthor = bookAuthorRelations.getAuthorsFromDB(book);
+        List<Author> bookAuthor = bookAuthorRelations.getAuthors(book);
         if( bookAuthor == null)
             return false;
         return bookAuthor.contains(author);
@@ -121,7 +118,7 @@ public class BookDaoImpl implements BookDao {
         bookAuthorRelations.clearAuthorsfromBook(book);
     }
 
-    private void deleteAllBookGenerLinks(Book book) {
+    private void deleteAllBookGenreLinks(Book book) {
         bookGenreRelations.clearGenresfromBook(book);
     }
 
@@ -140,34 +137,27 @@ public class BookDaoImpl implements BookDao {
         deleteAllBookAuthorLinks(book);
         linkBookToAurhorInDB(book);
 
-        deleteAllBookGenerLinks(book);
+        deleteAllBookGenreLinks(book);
         linkBookToGenreInDB(book);
     }
 
     @Override
     public List<Book> getBookList() {
-        return getBookList(false);
-    }
-
-    public List<Book> getBookList(boolean neetReload) {
         final String sql = "select * from books ";
-        if(neetReload || mBooks.isEmpty()) {
-            namedParameterJdbcOperations.query(sql, rs -> {
-                mBooks.clear();
-                bookGenreRelations.reloadRelations();
-                bookAuthorRelations.reloadRelations();
-                while(rs.next()) {
-                    Book book = new Book(rs.getString("book_name"), rs.getInt("issue_year"));
-                    book.setId(rs.getLong("book_id"));
-                    book.addAllGenres(bookGenreRelations.getGenres(book));
-                    book.addAllAuthors(bookAuthorRelations.getAuthors(book));
+        return   namedParameterJdbcOperations.query(sql, rs -> {
+            List<Book> bookList = new ArrayList<>();
+            Map<Long, List<Genre>> bookGenresRelation = bookGenreRelations.getBookGenreRelations();
+            Map<Long, List<Author>> bookAuthorsRelation = bookAuthorRelations.getBookAuthorRelations();
+            while(rs.next()) {
+                Book book = new Book(rs.getString("book_name"), rs.getInt("issue_year"));
+                book.setId(rs.getLong("book_id"));
+                book.addAllGenres(bookGenresRelation.get(book.getId()));
+                book.addAllAuthors(bookAuthorsRelation.get(book.getId()));
 
-                    mBooks.put(book.getId(), book);
-                }
-                return mBooks;
-            });
-        }
-        return mBooks.values().stream().collect(Collectors.toList());
+                bookList.add( book );
+            }
+            return bookList;
+        });
     }
 
     @Override
@@ -195,8 +185,8 @@ public class BookDaoImpl implements BookDao {
         public Book mapRow(ResultSet rs, int rowNum) throws SQLException {
             Book book = new Book(rs.getString("book_name"), rs.getInt("issue_year"));
             book.setId(rs.getLong("book_id"));
-            book.addAllGenres(bookGenreRelations.getGenresFromDB(book));
-            book.addAllAuthors(bookAuthorRelations.getAuthorsFromDB(book));
+            book.addAllGenres(bookGenreRelations.getGenres(book));
+            book.addAllAuthors(bookAuthorRelations.getAuthors(book));
             return book;
         }
     }

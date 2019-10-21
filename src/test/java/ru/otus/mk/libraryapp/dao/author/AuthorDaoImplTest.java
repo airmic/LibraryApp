@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Import;
 import ru.otus.mk.libraryapp.domain.Author;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,9 +38,9 @@ class AuthorDaoImplTest {
 
     @DisplayName("Список всех авторов")
     @Test
-    void getLinkedAuthorList() {
-        List<Author> authors = authorDao.getLinkedAuthorList();
-        assertEquals(authors.size(), 5, () -> "Количество авторов, связанныйх с книгами должно быть 5");
+    void getLinkedAuthoMap() {
+        Map<Long, Author> authorMap = authorDao.getLinkedAuthorMap();
+        assertEquals(authorMap.size(), 5, () -> "Количество авторов, связанныйх с книгами должно быть 5");
     }
 
     @DisplayName("Поиск автора по фамилии")

@@ -21,13 +21,10 @@ import java.util.stream.Collectors;
 public class AuthorDaoImpl implements AuthorDao {
 
     private final NamedParameterJdbcOperations namedParameterJdbcOperations;
-    private final Map<Long, Author> authorMap;
 
     @Autowired
     public AuthorDaoImpl(NamedParameterJdbcOperations namedParameterJdbcOperations) {
         this.namedParameterJdbcOperations = namedParameterJdbcOperations;
-        authorMap = new HashMap<>();
-        reloadAuthors();
     }
 
 
@@ -75,31 +72,28 @@ public class AuthorDaoImpl implements AuthorDao {
     }
 
     @Override
-    public Author getByCachedID(long id) {
-        return authorMap.get(id);
-    }
-
-    @Override
-    public void reloadAuthors() {
-        authorMap.putAll(getLinkedAuthorList().stream().collect(Collectors.toMap(Author::getId, x -> x)));
-    }
-
-    @Override
-    public List<Author> getLinkedAuthorList() {
+    public Map<Long, Author> getLinkedAuthorMap() {
         final String sql = "select distinct a.* from authors a natural join author_book";
-        return namedParameterJdbcOperations.query(sql, new AuthorRowMapper() );
+        return namedParameterJdbcOperations.query(sql, rs -> {
+            Map<Long, Author> authorMap = new HashMap<>();
+            while(rs.next()) {
+                authorMap.put(rs.getLong("author_id"), new Author(rs.getLong("author_id")
+                        , rs.getString("last_name")
+                        , rs.getString("first_name")
+                        , rs.getString("middle_name")));
+            }
+            return authorMap;
+        } );
     }
 
     public static class AuthorRowMapper implements RowMapper<Author> {
 
         @Override
         public Author mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Author author = new Author(rs.getString("last_name"), rs.getString("first_name"));
-            String middle_name = rs.getString("middle_name");
-            if( middle_name != null && !middle_name.isEmpty())
-                author.setMiddleName(middle_name);
-            author.setId(rs.getLong("author_id"));
-            return author;
+            return new Author(rs.getLong("author_id")
+                    , rs.getString("last_name")
+                    , rs.getString("first_name")
+                    , rs.getString("middle_name"));
         }
     }
 }
