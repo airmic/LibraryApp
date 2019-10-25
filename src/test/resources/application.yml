@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    data: mk-data.sql
+    url: jdbc:h2:mem:testdb2
+    initialization-mode: always
